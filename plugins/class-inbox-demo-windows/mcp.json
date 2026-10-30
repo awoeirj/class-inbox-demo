@@ -1,7 +1,9 @@
 {
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/mcp.schema.json",
   "mcpServers": {
     "class-inbox-demo": {
-      "command": "${PLUGIN_ROOT}/runtime/node.exe",
+      "type": "stdio",
+      "command": "./runtime/node.exe",
       "args": [
         "${PLUGIN_ROOT}/server.bundle.mjs"
       ],

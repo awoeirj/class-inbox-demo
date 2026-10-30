@@ -22,7 +22,7 @@ codex plugin marketplace add awoeirj/class-inbox-demo
 codex plugin add class-inbox-demo-mac@classroom-demo
 ```
 
-자신의 OS에 해당하는 플러그인 **하나만** 설치하세요. 설치 후 새 채팅을 열어 **“실습함 데모를 열어줘”**라고 입력합니다. 앱의 플러그인 실행·연결 확인이 표시되면 내용을 확인하세요. Windows ARM 네이티브 패키지는 제공하지 않습니다.
+자신의 OS에 해당하는 플러그인 **하나만** 설치하세요. 설치 후 사이드바의 앱 목록(더보기 `…`)에서 **실습함**을 엽니다. 사이드바에 항목이 나타나지 않으면 플러그인 로딩 실패일 수 있습니다. `0.2.0`을 설치했다면 아래 업데이트 명령 후 다시 설치하세요. `0.2.1`에서 설치 경로 해석 오류를 수정했습니다. 앱의 플러그인 실행·연결 확인이 표시되면 내용을 확인하세요. Windows ARM 네이티브 패키지는 제공하지 않습니다.
 
 ## 5분 체험
 
@@ -53,7 +53,7 @@ codex plugin add class-inbox-demo-mac@classroom-demo
 codex plugin marketplace upgrade classroom-demo
 ```
 
-업데이트 후 해당 OS의 `codex plugin add ...` 명령을 다시 실행하고 새 채팅에서 사용하세요. 제거는 Codex 플러그인 관리 화면에서 할 수 있습니다.
+업데이트 후 해당 OS의 `codex plugin add ...` 명령을 다시 실행하세요. 실행 중인 앱에서 반영되지 않으면 앱을 다시 시작해 사이드바의 실습함을 확인하세요. 제거는 Codex 플러그인 관리 화면에서 할 수 있습니다.
 
 ## 개발 및 검증
 

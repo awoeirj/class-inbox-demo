@@ -1,0 +1,32 @@
+{
+  "name": "classroom-demo",
+  "interface": {
+    "displayName": "실습함 데모"
+  },
+  "plugins": [
+    {
+      "name": "class-inbox-demo-windows",
+      "source": {
+        "source": "local",
+        "path": "./plugins/class-inbox-demo-windows"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    },
+    {
+      "name": "class-inbox-demo-mac",
+      "source": {
+        "source": "local",
+        "path": "./plugins/class-inbox-demo-mac"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

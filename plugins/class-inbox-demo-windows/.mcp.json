@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "class-inbox-demo": {
+      "command": "${PLUGIN_ROOT}/runtime/node.exe",
+      "args": [
+        "${PLUGIN_ROOT}/server.bundle.mjs"
+      ],
+      "cwd": "${PLUGIN_ROOT}"
+    }
+  }
+}

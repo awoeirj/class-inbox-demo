@@ -1,0 +1,9 @@
+export function setupTrash(call,toast){
+ const dialog=document.getElementById('trash-dialog'),list=document.getElementById('trash-list');
+ async function refresh(){try{const {items}=await call('inbox_trash');list.replaceChildren();if(!items.length){list.textContent='휴지통이 비어 있어요.';return;}for(const item of items){const row=document.createElement('div');row.className='draft-row';const label=document.createElement('span');label.textContent=`${item.kind==='assignment'?'실습':'제출물'} · ${item.title}`;const button=document.createElement('button');button.textContent='복구';button.onclick=async()=>{button.disabled=true;try{await call('inbox_restore',{kind:item.kind,id:item.id});await refresh();window.dispatchEvent(new Event('inbox-changed'));toast('복구했어요.');}catch(e){toast(e.message,true);}finally{button.disabled=false;}};row.append(label,button);list.append(row);}}catch(e){toast(e.message,true);}}
+ document.getElementById('open-trash').onclick=()=>{dialog.showModal();refresh();};document.getElementById('close-trash').onclick=()=>dialog.close();
+ const confirm=document.getElementById('delete-dialog');let pending=null;
+ document.getElementById('cancel-delete').onclick=()=>confirm.close();confirm.addEventListener('close',()=>{pending?.(false);pending=null;});
+ document.getElementById('confirm-delete').onclick=()=>{const resolve=pending;pending=null;confirm.close();resolve?.(true);};
+ return async(kind,item)=>{document.getElementById('delete-title').textContent=`“${item.title}”을 삭제할까요?`;document.getElementById('delete-note').textContent=kind==='assignment'?'휴지통에서 복구할 수 있어요. 이미 제출된 결과물은 그대로 남습니다.':'첨부 결과물과 공유 대화도 함께 휴지통으로 이동합니다. 나중에 복구할 수 있어요.';confirm.showModal();const yes=await new Promise(resolve=>pending=resolve);if(!yes)return false;await call('inbox_delete',{kind,id:item.id});window.dispatchEvent(new Event('inbox-changed'));toast('휴지통으로 이동했어요.');return true;};
+}

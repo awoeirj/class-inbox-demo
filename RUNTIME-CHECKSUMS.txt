@@ -1,0 +1,3 @@
+aa9549349e47dffaa42dcf95d6e06ade8c4bdafc980979883b88767670df385a  plugins/class-inbox-demo-mac/runtime/node-darwin-arm64.tar.gz
+d5e336d588c45be0c37dbd52cc29895593009ca4997a77a1fd02815131ed0e52  plugins/class-inbox-demo-mac/runtime/node-darwin-x64.tar.gz
+1c331340fa6cac5e4294725959070a143fa0507195a78ad77eed7943f719aac9  plugins/class-inbox-demo-windows/runtime/node.exe

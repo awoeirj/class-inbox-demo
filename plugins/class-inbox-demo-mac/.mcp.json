@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "class-inbox-demo": {
+      "command": "/bin/sh",
+      "args": [
+        "${PLUGIN_ROOT}/launch.sh"
+      ],
+      "cwd": "${PLUGIN_ROOT}"
+    }
+  }
+}

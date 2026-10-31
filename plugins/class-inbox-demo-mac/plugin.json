@@ -1,17 +1,17 @@
 {
   "name": "class-inbox-demo-mac",
-  "description": "과제 시작, 결과물 제출, 대화 공유를 체험하는 로컬 데모. Node.js 실행 환경 포함.",
+  "description": "과제 시작, 결과물 제출, 선택한 대화 공유. 로컬 데모와 Supabase 공유 반 지원. 실행 환경 포함.",
   "author": {
     "name": "awoeirj"
   },
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "extensions": {
     "com.openai": {
       "interface": {
         "displayName": "실습함 데모 · Mac",
-        "shortDescription": "두 가지 예시 과제로 실습과 제출을 체험하세요.",
-        "longDescription": "가상의 고객 문의 답변과 행사 안내 페이지 과제를 포함합니다. 데이터는 이 컴퓨터에만 저장되며 다른 사용자와 공유되지 않습니다. 실행 환경이 포함되어 별도 Node.js 설치가 필요 없습니다.",
+        "shortDescription": "참가 코드로 같은 반의 실습과 결과물을 공유하세요.",
+        "longDescription": "로컬 데모는 이 컴퓨터에만 저장됩니다. 참가 코드로 공유 반에 연결하면 새 과제·제출물·선택한 대화가 Supabase에 저장되어 같은 반 참가자에게 공개됩니다. 기존 로컬 자료는 자동 전송하지 않습니다. 별도 Node.js나 학생용 Supabase 계정이 필요 없습니다.",
         "developerName": "awoeirj",
         "category": "Productivity",
         "brandColor": "#176B53",

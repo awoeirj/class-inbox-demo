@@ -1,3 +1,4 @@
+import {prepareLesson} from './lesson-start.mjs';
 import {readFileSync,writeFileSync,renameSync,mkdirSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {homedir} from 'node:os';
@@ -32,7 +33,7 @@ export const cloud={
  async snapshot(){const items=(await list('inbox_assignments')).map(({owner_hash,room_hash,...r})=>({...r,read_at:config.read[room_hash+':'+r.id]||null,canDelete:owner_hash===hash(config.identity)}));return {items,unread:items.filter(x=>!x.read_at).length,connection:connection()};},
  async publish({title,body,criteria=''}){const [r]=await request('inbox_assignments',{method:'POST',body:{room_hash:roomHash(),owner_hash:hash(config.identity),title,body,criteria}});return {id:r.id,...await cloud.snapshot()};},
  async markRead(id){await assignment(id);config.read[roomHash()+':'+id] ||= new Date().toISOString();save();return cloud.snapshot();},
- async start(id){const a=await assignment(id);return {prompt:`다음 실습을 함께 진행해 줘. 먼저 목표와 진행 순서를 간단히 설명하고 내가 직접 해볼 수 있게 안내해 줘.\n\n제목: ${a.title}\n\n실습 내용:\n${a.body}\n\n제출 조건:\n${a.criteria||'별도 조건 없음'}\n\n실습 ID: ${a.id}\n반: ${config.roomName}\n\n제출 안내: 사용자가 제출을 요청하면 제목, 닉네임, 최종 결과물(텍스트·이미지·파일·링크), 공개할 대화 원문을 먼저 보여주고 확인받으세요. 확인한 내용만 inbox_submit 도구로 저장하세요. 제출하면 같은 반 참가 코드로 접속한 사람 모두에게 공개됩니다. 대화 기록을 추측해 만들지 마세요.`};},
+ async start(id){return prepareLesson(await assignment(id),{shared:true,roomName:config.roomName});},
  async demo(){return cloud.publish({title:'[테스트] AI로 하루 일정 정리하기',body:'할 일 5개를 적고 AI에게 우선순위를 정리해 달라고 요청하세요. 결과를 읽고 한 번 수정하세요.',criteria:'최종 일정과 공유할 요청 문장을 제출하세요.'});},
  async submissions(){return {submissions:(await list('inbox_submissions')).map(r=>({...r.payload,id:r.id,created_at:r.created_at,canDelete:owned(r)}))};},
  async submit(input){const a=await assignment(input.assignmentId);const [r]=await request('inbox_submissions',{method:'POST',body:{room_hash:roomHash(),owner_hash:hash(config.identity),assignment_id:a.id,payload:{...input,assignmentTitle:a.title}}});return {id:r.id,saved:true,shared:true};},

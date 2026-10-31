@@ -7,7 +7,7 @@ let c=await connect();const call=async(name,args={})=>{const r=await c.callTool(
 try{
  assert.equal((await call('inbox_list')).items.length,2);assert.equal((await call('inbox_submissions')).submissions.length,2);
  const html=await c.readResource({uri:'ui://class-inbox/inbox.html'});assert.ok(html.contents[0].text.includes('DEMO'));
- const prompt=await call('inbox_start',{id:'demo-event-page'});assert.ok(prompt.prompt.includes('AI Creative Day'));
+ const prompt=await call('inbox_start',{id:'demo-event-page'});assert.ok(prompt.context.includes('AI Creative Day'));
  await call('inbox_delete',{kind:'assignment',id:'demo-event-page'});await c.close();c=await connect();assert.equal((await call('inbox_list')).items.length,1);assert.equal((await call('inbox_submissions')).submissions.length,2);
  await call('inbox_restore',{kind:'assignment',id:'demo-event-page'});assert.equal((await call('inbox_list')).items.length,2);
  console.log('PASS: bundled runtime starts with no Node in PATH, seeds exactly once, tools/resources work, restart preserves deletion and restore.');

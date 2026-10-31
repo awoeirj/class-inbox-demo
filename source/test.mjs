@@ -11,7 +11,7 @@ try{
  await call('inbox_demo');assert.equal((await call('inbox_list')).unread,2);
  assert.equal((await call('inbox_read',{id:first.id})).unread,1);
  assert.equal((await call('inbox_read',{id:first.id})).unread,1);
- const prompt=await call('inbox_start',{id:first.id});assert.ok(prompt.prompt.includes('검증용 과제'));
+ const prompt=await call('inbox_start',{id:first.id});assert.ok(prompt.visibleText.includes('검증용 과제'));assert.ok(!prompt.visibleText.includes('첫 번째 줄'));assert.ok(prompt.context.includes('첫 번째 줄'));assert.ok(prompt.context.includes('첫 요청을 직접'));assert.ok(prompt.context.includes('이 컴퓨터에만'));assert.ok(!('prompt' in prompt));
  const payload={assignmentId:first.id,author:'테스터',title:'혼합 결과물',description:'여러 형식 검증',assets:[{type:'text',name:'글',text:'<script>예시 원문</script>'},{type:'link',name:'링크',url:'https://example.com'},{type:'file',name:'note.txt',mime:'text/plain',data:'data:text/plain;base64,aGVsbG8='}],messages:[{role:'user',text:'실제 요청'},{role:'assistant',text:'실제 응답'}]};
  const saved=await call('inbox_submit',payload);assert.ok(saved.saved);
  const found=(await call('inbox_submissions')).submissions.find(x=>x.id===saved.id);assert.deepEqual(found.assets,payload.assets);assert.deepEqual(found.messages,payload.messages);

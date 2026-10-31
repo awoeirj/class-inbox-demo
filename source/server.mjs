@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { snapshot,publish,markRead,start,demo,submissions,submit,trashItems,moveToTrash,restore,ensureDemo,connection,configure } from './storage.mjs';
 import {submissionShape,submissionSchema} from './submissions.mjs';
-const server=new McpServer({name:'class-inbox-demo',version:'0.3.0'});
+const server=new McpServer({name:'class-inbox-demo',version:'0.3.1'});
 const uri='ui://class-inbox/inbox.html';
 const wrap=data=>({content:[{type:'text',text:JSON.stringify(data)}],structuredContent:data});
 const read={readOnlyHint:true,destructiveHint:false,openWorldHint:true};
@@ -13,7 +13,7 @@ registerAppTool(server,'inbox_open',{title:'실습함',description:'실습 수�
 registerAppTool(server,'inbox_panel',{title:'실습 목록',description:'대화 옆에서 실습함을 엽니다.',inputSchema:{},annotations:read,_meta:{ui:{resourceUri:uri},'openai/ui':{entrypoints:[{type:'thread'}]}}},async()=>wrap(await snapshot()));
 server.registerTool('inbox_list',{description:'현재 선택한 저장소의 실습 목록과 미확인 개수를 확인합니다.',inputSchema:{},annotations:read,_meta:{ui:{visibility:['app','model']}}},async()=>wrap(await snapshot()));
 server.registerTool('inbox_read',{description:'선택한 과제를 읽음으로 표시합니다.',inputSchema:{id:z.string()},annotations:{destructiveHint:false,openWorldHint:true},_meta:{ui:{visibility:['app','model']}}},async({id})=>wrap(await markRead(id)));
-server.registerTool('inbox_start',{description:'선택한 과제로 시작할 채팅의 입력 초안을 준비합니다.',inputSchema:{id:z.string()},annotations:read,_meta:{ui:{visibility:['app','model']}}},async({id})=>wrap(await start(id)));
+server.registerTool('inbox_start',{description:'실습 시작 문장과 AI용 과제 배경·진행 안내를 준비합니다. 과제를 대신 완성하라는 요청이 아닙니다.',inputSchema:{id:z.string()},annotations:read,_meta:{ui:{visibility:['app','model']}}},async({id})=>wrap(await start(id)));
 server.registerTool('inbox_publish',{description:'현재 실습함에 과제를 배포합니다. 공유 모드에서는 같은 반 참가자에게 공개됩니다.',inputSchema:{title:z.string().min(1).max(200),body:z.string().min(1).max(20000),criteria:z.string().max(5000).optional()},annotations:{destructiveHint:false,openWorldHint:true},_meta:{ui:{visibility:['app','model']}}},async(args)=>wrap(await publish(args)));
 server.registerTool('inbox_demo',{description:'현재 실습함에 테스트 과제 한 개를 보냅니다.',inputSchema:{},annotations:{destructiveHint:false,openWorldHint:true},_meta:{ui:{visibility:['app','model']}}},async()=>wrap(await demo()));
 server.registerTool('inbox_submissions',{description:'현재 실습함의 제출물과 학생이 공유한 대화를 조회합니다.',inputSchema:{},annotations:read},async()=>wrap(await submissions()));

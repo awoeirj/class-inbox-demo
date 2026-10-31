@@ -5,7 +5,7 @@
     "name": "awoeirj"
   },
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "extensions": {
     "com.openai": {
       "interface": {

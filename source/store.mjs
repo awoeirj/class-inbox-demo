@@ -1,3 +1,4 @@
+import {prepareLesson} from './lesson-start.mjs';
 import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -12,7 +13,8 @@ db.exec('CREATE TABLE IF NOT EXISTS trash(kind TEXT NOT NULL,id TEXT NOT NULL,de
 export function snapshot(){const items=db.prepare('SELECT * FROM assignments WHERE id NOT IN (SELECT id FROM trash WHERE kind=\'assignment\') ORDER BY created_at DESC, id DESC').all();return {items,unread:items.filter(x=>!x.read_at).length};}
 export function publish({title,body,criteria=''}){const id=randomUUID();db.prepare('INSERT INTO assignments(id,title,body,criteria,created_at) VALUES(?,?,?,?,?)').run(id,title,body,criteria,new Date().toISOString());return {id,...snapshot()};}
 export function markRead(id){const r=db.prepare('UPDATE assignments SET read_at=COALESCE(read_at,?) WHERE id=? AND id NOT IN (SELECT id FROM trash WHERE kind=\'assignment\')').run(new Date().toISOString(),id);if(!r.changes)throw Error('과제를 찾을 수 없습니다.');return snapshot();}
-export function start(id){const item=db.prepare('SELECT * FROM assignments WHERE id=? AND id NOT IN (SELECT id FROM trash WHERE kind=\'assignment\')').get(id);if(!item)throw Error('과제를 찾을 수 없습니다.');return {prompt:`다음 실습을 함께 진행해 줘. 먼저 목표와 진행 순서를 간단히 설명하고 내가 직접 해볼 수 있게 안내해 줘.\n\n제목: ${item.title}\n\n실습 내용:\n${item.body}\n\n제출 조건:\n${item.criteria || '별도 조건 없음'}\n\n실습 ID: ${id}\n\n제출 안내: 사용자가 제출을 요청하면 제목, 닉네임, 최종 결과물(텍스트·이미지·파일·링크), 공개할 대화 원문을 먼저 보여주고 확인받으세요. 확인한 내용만 inbox_submit 도구로 저장하세요. 현재는 이 컴퓨터에만 저장하는 테스트입니다. 대화 기록을 추측해 만들지 마세요.`};}
+export function start(id){const item=db.prepare('SELECT * FROM assignments WHERE id=? AND id NOT IN (SELECT id FROM trash WHERE kind=\'assignment\')').get(id);if(!item)throw Error('과제를 찾을 수 없습니다.');return prepareLesson(item);}
+
 export function demo(){return publish({title:'AI로 내 하루를 정리하기',body:'1. 오늘 해야 할 일 5가지를 적어 보세요.\n2. Codex에게 중요도와 예상 소요 시간을 기준으로 정리해 달라고 요청하세요.\n3. 결과를 읽고 실제 일정에 맞게 한 번 수정해 보세요.',criteria:'사용한 요청 문장과 최종 일정, 수정한 이유 한 줄을 준비하세요.'});}
 
 // Submission snapshots preserve the exact selected artifacts and shared messages.

@@ -11,18 +11,18 @@ let config=existsSync(path)?JSON.parse(readFileSync(path,'utf8')):{mode:'local',
 config.identity ||= randomBytes(32).toString('hex'); config.read ||= {};
 function save(){const tmp=path+'.'+randomUUID()+'.tmp';writeFileSync(tmp,JSON.stringify(config),{mode:0o600});renameSync(tmp,path);}
 const hash=s=>createHash('sha256').update(s).digest('hex');
-const roomHash=()=>hash(config.roomCode);
+const roomHash=()=>config.roomHash||hash(encodeURIComponent(config.roomCode));
 export function connection(){return {mode:config.mode,roomName:config.roomName||null};}
 export function isCloud(){return config.mode==='cloud';}
 async function request(resource,{method='GET',body,roomCode=config.roomCode}={}){
- const res=await fetch(`${publicConfig.url}/rest/v1/${resource}`,{method,headers:{apikey:publicConfig.key,'Content-Type':'application/json','x-classroom-key':roomCode||'','x-installation-key':config.identity,Prefer:'return=representation'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+ const res=await fetch(`${publicConfig.url}/rest/v1/${resource}`,{method,headers:{apikey:publicConfig.key,'Content-Type':'application/json','x-classroom-key':encodeURIComponent(roomCode||''),'x-installation-key':config.identity,Prefer:'return=representation'},body:body===undefined?undefined:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
  const text=await res.text();if(!res.ok){let message;try{message=JSON.parse(text).message;}catch{}throw Error(`공유 저장소 요청 실패 (${res.status}): ${message||'연결을 확인해 주세요.'}`);}return text?JSON.parse(text):null;
 }
 export async function configure({mode,roomCode}){
  if(mode==='local'){config.mode='local';save();return connection();}
- const code=roomCode?.trim();if(!/^[a-f0-9]{64}$/.test(code||''))throw Error('64자리 참가 코드를 확인해 주세요.');
- const rooms=await request('inbox_rooms?select=name',{roomCode:code});if(rooms.length!==1)throw Error('참가 코드를 찾을 수 없습니다.');
- config.mode='cloud';config.roomCode=code;config.roomName=rooms[0].name;save();return connection();
+ const code=roomCode?.trim();if(!code||Array.from(code).length<4)throw Error('참가 코드는 4자 이상 입력해 주세요.');
+ const rooms=await request('inbox_rooms?select=name,room_hash',{roomCode:code});if(rooms.length!==1)throw Error('참가 코드를 찾을 수 없습니다.');
+ config.mode='cloud';config.roomCode=code;config.roomName=rooms[0].name;config.roomHash=rooms[0].room_hash;save();return connection();
 }
 async function list(table,filter='deleted_at=is.null'){
  const all=[];for(let offset=0;;offset+=100){const rows=await request(`${table}?${filter}&order=created_at.desc,id.desc&limit=100&offset=${offset}`);all.push(...rows);if(rows.length<100)break;}return all;

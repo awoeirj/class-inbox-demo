@@ -5,7 +5,7 @@ import { readFileSync } from 'node:fs';
 import { z } from 'zod';
 import { snapshot,publish,markRead,start,demo,submissions,submit,trashItems,moveToTrash,restore,ensureDemo,connection,configure } from './storage.mjs';
 import {submissionShape,submissionSchema} from './submissions.mjs';
-const server=new McpServer({name:'class-inbox-demo',version:'0.3.1'});
+const server=new McpServer({name:'class-inbox-demo',version:'0.3.2'});
 const uri='ui://class-inbox/inbox.html';
 const wrap=data=>({content:[{type:'text',text:JSON.stringify(data)}],structuredContent:data});
 const read={readOnlyHint:true,destructiveHint:false,openWorldHint:true};

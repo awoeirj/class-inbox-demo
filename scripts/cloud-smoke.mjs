@@ -10,7 +10,8 @@ async function connect(dir){const c=new Client({name:'cloud-verification',versio
 async function call(c,name,args={}){const r=await c.callTool({name,arguments:args});assert.ok(!r.isError,JSON.stringify(r));return r.structuredContent;}
 try{
  const a=await connect(dirs[0]),b=await connect(dirs[1]),outsider=await connect(dirs[2]);
- await call(a,'inbox_connect',{mode:'cloud',roomCode:code});await call(b,'inbox_connect',{mode:'cloud',roomCode:code});
+ for(const roomCode of ['', 'abc', '   '])assert.equal((await a.callTool({name:'inbox_connect',arguments:{mode:'cloud',roomCode}})).isError,true);
+ await call(a,'inbox_connect',{mode:'cloud',roomCode:'  '+code+'  '});await call(b,'inbox_connect',{mode:'cloud',roomCode:code});
  assert.equal((await outsider.callTool({name:'inbox_connect',arguments:{mode:'cloud',roomCode:randomBytes(32).toString('hex')}})).isError,true);
  const initial=await call(a,'inbox_publish',{title:'연동 검증: 두 사용자',body:'공유 수신과 제출 확인',criteria:'텍스트·파일·링크'});
  assert.ok((await call(b,'inbox_list')).items.some(x=>x.id===initial.id));

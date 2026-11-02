@@ -14,11 +14,11 @@ function render(){
  if(state.connection)activeConnection=state.connection;
  const shared=activeConnection.mode==='cloud';
  $('connection-button').textContent=shared?activeConnection.roomName+' · 공유 중':'반 연결';
- $('storage-note').textContent=shared?'Supabase 공유 저장소 · 같은 반 참가자에게 공개됩니다.':'로컬 데모 · 이 컴퓨터에만 저장됩니다.';
- $('submission-sharing-note').textContent=shared?'제출한 결과물과 공개를 확인한 채팅는 같은 반 참가자 모두에게 공개됩니다.':'추가한 결과물과 대화는 이 컴퓨터에만 저장됩니다.';
+ $('storage-note').textContent=shared?'Supabase 공유 저장소 · 같은 반 참가자에게 공개됩니다.':'이 컴퓨터 저장소 · 이 컴퓨터에만 저장됩니다.';
+ $('submission-sharing-note').textContent=shared?'제출한 결과물과 공개를 확인한 채팅은 같은 반 참가자 모두에게 공개됩니다.':'추가한 결과물과 대화는 이 컴퓨터에만 저장됩니다.';
  $('count').textContent=state.unread;$('count').hidden=!state.unread;
  $('summary').textContent=state.unread?`아직 확인하지 않은 실습이 ${state.unread}개 있어요.`:'새로운 실습을 모두 확인했어요.';
- $('list').innerHTML=state.items.length?state.items.map(x=>`<button class="item ${x.id===selected?'selected':''}" data-id="${escape(x.id)}"><span class="dot ${x.read_at?'read':''}"></span><span><strong>${escape(x.title)}</strong><small>${new Date(x.created_at).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} · ${x.read_at?'확인함':'새 실습'}</small></span><span class="arrow">›</span></button>`).join(''):'<div class="empty">아직 도착한 실습이 없어요.<br>오른쪽 위에서 테스트 실습을 보내보세요.</div>';
+ $('list').innerHTML=state.items.length?state.items.map(x=>`<button class="item ${x.id===selected?'selected':''}" data-id="${escape(x.id)}"><span class="dot ${x.read_at?'read':''}"></span><span><strong>${escape(x.title)}</strong><small>${new Date(x.created_at).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} · ${x.read_at?'확인함':'새 실습'}</small></span><span class="arrow">›</span></button>`).join(''):'<div class="empty">아직 도착한 실습이 없어요.<br>반 연결에서 참가 코드를 입력해 주세요.</div>';
  const x=state.items.find(x=>x.id===selected);
  $('detail').innerHTML=x?`${x.canDelete===false?'':'<button id="delete-assignment" class="delete-button">실습 삭제</button>'}<div class="eyebrow">ASSIGNMENT</div><h2>${escape(x.title)}</h2><div class="section-label">실습 안내</div><p class="body">${escape(x.body)}</p><div class="criteria"><div class="section-label">제출 조건</div><p>${escape(x.criteria||'별도 조건 없음')}</p></div><p class="hint">${x.due_at?`제출 마감: ${escape(new Date(x.due_at).toLocaleString('ko-KR'))} · ${x.isClosed?'마감됨':'접수 중'}`:'제출 마감 없음'}</p>${x.canDelete===false?'':'<button id="edit-deadline">마감 설정</button>'}<button id="start" class="primary">이 실습 시작 <span>↗</span></button><p class="hint">새 채팅에는 짧은 시작 문장이 표시돼요. AI는 과제와 진행 안내를 전달받고, 첫 요청은 직접 작성해요.</p>`:'<div class="placeholder"><div class="symbol">▤</div><h2>도착한 실습을 열어보세요</h2><p>과제를 확인하고 바로 Codex와 시작할 수 있어요.</p></div>';
  document.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openItem(b.dataset.id));
@@ -27,7 +27,6 @@ function render(){
 async function openItem(id){try{selected=id;state=await call('inbox_read',{id});render();}catch(e){toast(e.message,true);}}
 async function refresh(){if(!connected||busy)return;try{const next=await call('inbox_list');if(JSON.stringify(next)!==JSON.stringify(state)){state=next;render();}toast('연결됨 · 새 실습을 자동으로 확인 중');}catch(e){toast('연결을 확인해 주세요 · '+e.message,true);}}
 async function startItem(x){const button=$('start');button.disabled=true;try{if(!app.getHostCapabilities()?.experimental?.['openai/message'])throw Error('이 화면에서는 새 채팅 자동 시작을 지원하지 않습니다. Codex의 실습함에서 다시 시도해 주세요.');const lesson=await call('inbox_start',{id:x.id});const result=await app.sendMessage(lessonMessage(lesson));if(result?.isError)throw Error('새 채팅을 열지 못했습니다.');toast('새 채팅으로 실습 시작 요청을 보냈어요.');}catch(e){toast(e.message,true);}finally{button.disabled=false;}}
-$('demo').onclick=async()=>{if(!connected)return;busy=true;$('demo').disabled=true;try{state=await call('inbox_demo');render();toast('새 실습을 받았어요. 목록에서 확인해 보세요.');}catch(e){toast(e.message,true);}finally{busy=false;$('demo').disabled=false;}};
 $('refresh').onclick=refresh;
 $('teacher').onclick=()=>$('publish').showModal();
 $('cancel').onclick=()=>$('publish').close();

@@ -29,14 +29,14 @@ export function trashItems(){return {items:db.prepare("SELECT t.kind,t.id,t.dele
 export function moveToTrash(kind,id){const table=kind==='assignment'?'assignments':kind==='submission'?'submissions':null;if(!table)throw Error('잘못된 항목 종류입니다.');if(!db.prepare(`SELECT id FROM ${table} WHERE id=?`).get(id))throw Error('항목을 찾을 수 없습니다.');db.prepare('INSERT OR IGNORE INTO trash VALUES(?,?,?)').run(kind,id,new Date().toISOString());return {deleted:true};}
 export function restore(kind,id){const r=db.prepare('DELETE FROM trash WHERE kind=? AND id=?').run(kind,id);if(!r.changes)throw Error('휴지통에서 항목을 찾을 수 없습니다.');return {restored:true};}
 
+// Retire only the known bundled examples once; never seed new installations.
 export function ensureDemo(){
- if(process.env.CLASS_INBOX_NO_DEMO==='1')return;
  db.exec('CREATE TABLE IF NOT EXISTS demo_meta(key TEXT PRIMARY KEY,value TEXT NOT NULL)');
  db.exec('BEGIN IMMEDIATE');
- try{if(!db.prepare('SELECT key FROM demo_meta WHERE key=?').get('seed-v1')){
-  for(const a of demoData.assignments)db.prepare('INSERT OR IGNORE INTO assignments(id,title,body,criteria,created_at) VALUES(?,?,?,?,?)').run(a.id,a.title,a.body,a.criteria,a.created_at);
-  for(const s of demoData.submissions)db.prepare('INSERT OR IGNORE INTO submissions(id,assignment_id,payload,created_at) VALUES(?,?,?,?)').run(s.id,s.assignmentId,JSON.stringify(s),s.created_at);
-  db.prepare('INSERT INTO demo_meta VALUES(?,?)').run('seed-v1','1');
+ try{if(!db.prepare('SELECT key FROM demo_meta WHERE key=?').get('retire-seed-v1')){
+  for(const a of demoData.assignments){const row=db.prepare('SELECT * FROM assignments WHERE id=?').get(a.id);if(row&&row.title===a.title&&row.body===a.body)moveToTrash('assignment',a.id);}
+  for(const s of demoData.submissions){const row=db.prepare('SELECT payload FROM submissions WHERE id=?').get(s.id);if(row&&row.payload===JSON.stringify(s))moveToTrash('submission',s.id);}
+  db.prepare('INSERT INTO demo_meta VALUES(?,?)').run('retire-seed-v1','1');
  }db.exec('COMMIT');}catch(e){db.exec('ROLLBACK');throw e;}
 }
 

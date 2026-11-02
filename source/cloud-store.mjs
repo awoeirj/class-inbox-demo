@@ -1,3 +1,4 @@
+import {normalizeDeadline,isClosed} from './deadlines.mjs';
 import {prepareLesson} from './lesson-start.mjs';
 import {readFileSync,writeFileSync,renameSync,mkdirSync,existsSync} from 'node:fs';
 import {join} from 'node:path';
@@ -30,13 +31,14 @@ async function list(table,filter='deleted_at=is.null'){
 async function assignment(id){const rows=await request(`inbox_assignments?id=eq.${encodeURIComponent(id)}&deleted_at=is.null`);if(!rows.length)throw Error('과제를 찾을 수 없습니다.');return rows[0];}
 function owned(row){return row.owner_hash===hash(config.identity);}
 export const cloud={
- async snapshot(){const items=(await list('inbox_assignments')).map(({owner_hash,room_hash,...r})=>({...r,read_at:config.read[room_hash+':'+r.id]||null,canDelete:owner_hash===hash(config.identity)}));return {items,unread:items.filter(x=>!x.read_at).length,connection:connection()};},
- async publish({title,body,criteria=''}){const [r]=await request('inbox_assignments',{method:'POST',body:{room_hash:roomHash(),owner_hash:hash(config.identity),title,body,criteria}});return {id:r.id,...await cloud.snapshot()};},
+ async snapshot(){const items=(await list('inbox_assignments')).map(({owner_hash,room_hash,...r})=>({...r,isClosed:isClosed(r),read_at:config.read[room_hash+':'+r.id]||null,canDelete:owner_hash===hash(config.identity)}));return {items,unread:items.filter(x=>!x.read_at).length,connection:connection()};},
+ async publish({title,body,criteria='',dueAt=null}){const [r]=await request('inbox_assignments',{method:'POST',body:{room_hash:roomHash(),owner_hash:hash(config.identity),title,body,criteria,due_at:normalizeDeadline(dueAt)}});return {id:r.id,...await cloud.snapshot()};},
  async markRead(id){await assignment(id);config.read[roomHash()+':'+id] ||= new Date().toISOString();save();return cloud.snapshot();},
  async start(id){return prepareLesson(await assignment(id),{shared:true,roomName:config.roomName});},
+ async setDeadline({id,dueAt=null}){const rows=await request(`inbox_assignments?id=eq.${encodeURIComponent(id)}&deleted_at=is.null`,{method:'PATCH',body:{due_at:normalizeDeadline(dueAt)}});if(!rows.length)throw Error('과제가 없거나 이 컴퓨터에서 작성한 과제가 아닙니다.');return cloud.snapshot();},
  async demo(){return cloud.publish({title:'[테스트] AI로 하루 일정 정리하기',body:'할 일 5개를 적고 AI에게 우선순위를 정리해 달라고 요청하세요. 결과를 읽고 한 번 수정하세요.',criteria:'최종 일정과 공유할 요청 문장을 제출하세요.'});},
- async submissions(){return {submissions:(await list('inbox_submissions')).map(r=>({...r.payload,id:r.id,created_at:r.created_at,canDelete:owned(r)}))};},
- async submit(input){const a=await assignment(input.assignmentId);const [r]=await request('inbox_submissions',{method:'POST',body:{room_hash:roomHash(),owner_hash:hash(config.identity),assignment_id:a.id,payload:{...input,assignmentTitle:a.title}}});return {id:r.id,saved:true,shared:true};},
+ async submissions(){return {submissions:(await list('inbox_submissions')).map(r=>({...r.payload,id:r.id,created_at:r.created_at,late:r.late,deadline_at_submission:r.deadline_at_submission,canDelete:owned(r)}))};},
+ async submit(input){const a=await assignment(input.assignmentId);const [r]=await request('inbox_submissions',{method:'POST',body:{room_hash:roomHash(),owner_hash:hash(config.identity),assignment_id:a.id,payload:{...input,assignmentTitle:a.title}}});return {id:r.id,saved:true,shared:true,late:r.late};},
  async trashItems(){const items=[];for(const [kind,table] of [['assignment','inbox_assignments'],['submission','inbox_submissions']])for(const r of await list(table,'deleted_at=not.is.null'))if(owned(r))items.push({kind,id:r.id,deleted_at:r.deleted_at,title:r.title||r.payload?.title});return {items:items.sort((a,b)=>b.deleted_at.localeCompare(a.deleted_at))};},
  async moveToTrash(kind,id){return changeTrash(kind,id,new Date().toISOString());},
  async restore(kind,id){return changeTrash(kind,id,null);},

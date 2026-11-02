@@ -13,6 +13,10 @@ try{
  assert.equal((await call('inbox_read',{id:first.id})).unread,1);
  const prompt=await call('inbox_start',{id:first.id});assert.ok(prompt.visibleText.includes('검증용 과제'));assert.ok(!prompt.visibleText.includes('첫 번째 줄'));assert.ok(prompt.context.includes('첫 번째 줄'));assert.ok(prompt.context.includes('첫 요청을 직접'));assert.ok(prompt.context.includes('이 컴퓨터에만'));assert.ok(!('prompt' in prompt));
  const payload={assignmentId:first.id,author:'테스터',title:'혼합 결과물',description:'여러 형식 검증',assets:[{type:'text',name:'글',text:'<script>예시 원문</script>'},{type:'link',name:'링크',url:'https://example.com'},{type:'file',name:'note.txt',mime:'text/plain',data:'data:text/plain;base64,aGVsbG8='}],messages:[{role:'user',text:'실제 요청'},{role:'assistant',text:'실제 응답'}]};
+ await call('inbox_set_deadline',{id:first.id,dueAt:'2000-01-01T09:00:00+09:00'});
+ assert.equal((await call('inbox_list')).items.find(x=>x.id===first.id).isClosed,true);
+ const late=await call('inbox_submit',payload);assert.equal(late.late,true);const lateRows=(await call('inbox_submissions')).submissions;assert.equal(lateRows.find(x=>x.id===late.id).late,true);await call('inbox_delete',{kind:'submission',id:late.id});
+ await call('inbox_set_deadline',{id:first.id,dueAt:null});
  const saved=await call('inbox_submit',payload);assert.ok(saved.saved);
  const found=(await call('inbox_submissions')).submissions.find(x=>x.id===saved.id);assert.deepEqual(found.assets,payload.assets);assert.deepEqual(found.messages,payload.messages);
  for(const bad of [{...payload,assignmentId:'missing'},{...payload,assets:[]},{...payload,assets:[{type:'link',name:'bad',url:'javascript:alert(1)'}]},{...payload,assets:[{type:'file',name:'bad',mime:'image/png',data:'broken'}]}]){assert.equal((await c.callTool({name:'inbox_submit',arguments:bad})).isError,true);}
@@ -25,13 +29,13 @@ try{
  assert.equal((await c.callTool({name:'inbox_submit',arguments:payload})).isError,true);
  await call('inbox_delete',{kind:'submission',id:saved.id});
  assert.equal((await call('inbox_submissions')).submissions.length,0);
- assert.equal((await call('inbox_trash')).items.length,2);
+ assert.equal((await call('inbox_trash')).items.length,3);
  await c.close();c=await connect();
- assert.equal((await call('inbox_trash')).items.length,2);
+ assert.equal((await call('inbox_trash')).items.length,3);
  await call('inbox_restore',{kind:'assignment',id:first.id});
  await call('inbox_restore',{kind:'submission',id:saved.id});
  assert.deepEqual((await call('inbox_submissions')).submissions[0].assets,payload.assets);
- assert.equal((await call('inbox_trash')).items.length,0);
+ assert.equal((await call('inbox_trash')).items.length,1);
  assert.equal((await c.callTool({name:'inbox_delete',arguments:{kind:'assignment',id:'missing'}})).isError,true);
  await c.close();c=await connect();const restored=await call('inbox_list');assert.equal(restored.items.length,2);assert.equal(restored.unread,1);
  assert.equal((await call('inbox_submissions')).submissions.length,1);

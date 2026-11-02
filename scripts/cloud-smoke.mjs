@@ -18,6 +18,15 @@ try{
  await call(a,'inbox_read',{id:initial.id});assert.equal((await call(b,'inbox_list')).items.find(x=>x.id===initial.id).read_at,null);
  assert.equal((await b.callTool({name:'inbox_delete',arguments:{kind:'assignment',id:initial.id}})).isError,true);
  const input={assignmentId:initial.id,author:'검증용 B',title:'혼합 결과물 검증',description:'실제 사용자 데이터 아님',assets:[{type:'text',name:'글',text:'원문 <b>유지</b>'},{type:'link',name:'링크',url:'https://example.com/'},{type:'file',name:'hello.txt',mime:'text/plain',data:'data:text/plain;base64,aGVsbG8='}],messages:[{role:'user',text:'검증용 요청'},{role:'assistant',text:'검증용 응답'}]};
+ await call(a,'inbox_set_deadline',{id:initial.id,dueAt:'2000-01-01T09:00:00+09:00'});
+ const late=await call(b,'inbox_submit',input);assert.equal(late.late,true);
+ assert.equal((await b.callTool({name:'inbox_set_deadline',arguments:{id:initial.id,dueAt:null}})).isError,true);
+ const pubDeadline=JSON.parse(readFileSync('source/cloud-public.json','utf8'));
+ const deadlineCfg=JSON.parse(readFileSync(join(dirs[1],'cloud.json'),'utf8'));
+ const {createHash}=await import('node:crypto');const hash=x=>createHash('sha256').update(x).digest('hex');
+ const directLate=await fetch(pubDeadline.url+'/rest/v1/inbox_submissions',{method:'POST',headers:{apikey:pubDeadline.key,'Content-Type':'application/json','x-classroom-key':code,'x-installation-key':deadlineCfg.identity,Prefer:'return=representation'},body:JSON.stringify({room_hash:deadlineCfg.roomHash,owner_hash:hash(deadlineCfg.identity),assignment_id:initial.id,payload:input})});
+ if(!directLate.ok)throw Error(await directLate.text());const lateDirect=await directLate.json();assert.equal(lateDirect[0].late,true);assert.ok(lateDirect[0].deadline_at_submission);
+ await call(a,'inbox_set_deadline',{id:initial.id,dueAt:new Date(Date.now()+3600000).toISOString()});
  const submission=await call(b,'inbox_submit',input);
  const rows=(await call(a,'inbox_submissions')).submissions;const row=rows.find(x=>x.id===submission.id);assert.deepEqual(row.assets,input.assets);assert.deepEqual(row.messages,input.messages);assert.equal(row.canDelete,false);
  assert.equal((await a.callTool({name:'inbox_delete',arguments:{kind:'submission',id:submission.id}})).isError,true);

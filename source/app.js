@@ -15,14 +15,14 @@ function render(){
  const shared=activeConnection.mode==='cloud';
  $('connection-button').textContent=shared?activeConnection.roomName+' · 공유 중':'반 연결';
  $('storage-note').textContent=shared?'Supabase 공유 저장소 · 같은 반 참가자에게 공개됩니다.':'로컬 데모 · 이 컴퓨터에만 저장됩니다.';
- $('submission-sharing-note').textContent=shared?'제출한 결과물과 선택한 대화는 같은 반 참가자 모두에게 공개됩니다.':'추가한 결과물과 대화는 이 컴퓨터에만 저장됩니다.';
+ $('submission-sharing-note').textContent=shared?'제출한 결과물과 공개를 확인한 채팅는 같은 반 참가자 모두에게 공개됩니다.':'추가한 결과물과 대화는 이 컴퓨터에만 저장됩니다.';
  $('count').textContent=state.unread;$('count').hidden=!state.unread;
  $('summary').textContent=state.unread?`아직 확인하지 않은 실습이 ${state.unread}개 있어요.`:'새로운 실습을 모두 확인했어요.';
  $('list').innerHTML=state.items.length?state.items.map(x=>`<button class="item ${x.id===selected?'selected':''}" data-id="${escape(x.id)}"><span class="dot ${x.read_at?'read':''}"></span><span><strong>${escape(x.title)}</strong><small>${new Date(x.created_at).toLocaleString('ko-KR',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'})} · ${x.read_at?'확인함':'새 실습'}</small></span><span class="arrow">›</span></button>`).join(''):'<div class="empty">아직 도착한 실습이 없어요.<br>오른쪽 위에서 테스트 실습을 보내보세요.</div>';
  const x=state.items.find(x=>x.id===selected);
- $('detail').innerHTML=x?`${x.canDelete===false?'':'<button id="delete-assignment" class="delete-button">실습 삭제</button>'}<div class="eyebrow">ASSIGNMENT</div><h2>${escape(x.title)}</h2><div class="section-label">실습 안내</div><p class="body">${escape(x.body)}</p><div class="criteria"><div class="section-label">제출 조건</div><p>${escape(x.criteria||'별도 조건 없음')}</p></div><button id="start" class="primary">이 실습 시작 <span>↗</span></button><p class="hint">새 채팅에는 짧은 시작 문장이 표시돼요. AI는 과제와 진행 안내를 전달받고, 첫 요청은 직접 작성해요.</p>`:'<div class="placeholder"><div class="symbol">▤</div><h2>도착한 실습을 열어보세요</h2><p>과제를 확인하고 바로 Codex와 시작할 수 있어요.</p></div>';
+ $('detail').innerHTML=x?`${x.canDelete===false?'':'<button id="delete-assignment" class="delete-button">실습 삭제</button>'}<div class="eyebrow">ASSIGNMENT</div><h2>${escape(x.title)}</h2><div class="section-label">실습 안내</div><p class="body">${escape(x.body)}</p><div class="criteria"><div class="section-label">제출 조건</div><p>${escape(x.criteria||'별도 조건 없음')}</p></div><p class="hint">${x.due_at?`제출 마감: ${escape(new Date(x.due_at).toLocaleString('ko-KR'))} · ${x.isClosed?'마감됨':'접수 중'}`:'제출 마감 없음'}</p>${x.canDelete===false?'':'<button id="edit-deadline">마감 설정</button>'}<button id="start" class="primary">이 실습 시작 <span>↗</span></button><p class="hint">새 채팅에는 짧은 시작 문장이 표시돼요. AI는 과제와 진행 안내를 전달받고, 첫 요청은 직접 작성해요.</p>`:'<div class="placeholder"><div class="symbol">▤</div><h2>도착한 실습을 열어보세요</h2><p>과제를 확인하고 바로 Codex와 시작할 수 있어요.</p></div>';
  document.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>openItem(b.dataset.id));
- if(x){$('start').onclick=()=>startItem(x);if($('delete-assignment'))$('delete-assignment').onclick=async()=>{try{if(await removeItem('assignment',x)){selected=null;await refresh();render();}}catch(e){toast(e.message,true);}};}
+ if(x){if($('edit-deadline'))$('edit-deadline').onclick=()=>editDeadline(x);$('start').onclick=()=>startItem(x);if($('delete-assignment'))$('delete-assignment').onclick=async()=>{try{if(await removeItem('assignment',x)){selected=null;await refresh();render();}}catch(e){toast(e.message,true);}};}
 }
 async function openItem(id){try{selected=id;state=await call('inbox_read',{id});render();}catch(e){toast(e.message,true);}}
 async function refresh(){if(!connected||busy)return;try{const next=await call('inbox_list');if(JSON.stringify(next)!==JSON.stringify(state)){state=next;render();}toast('연결됨 · 새 실습을 자동으로 확인 중');}catch(e){toast('연결을 확인해 주세요 · '+e.message,true);}}
@@ -31,7 +31,7 @@ $('demo').onclick=async()=>{if(!connected)return;busy=true;$('demo').disabled=tr
 $('refresh').onclick=refresh;
 $('teacher').onclick=()=>$('publish').showModal();
 $('cancel').onclick=()=>$('publish').close();
-$('form').onsubmit=async e=>{e.preventDefault();if(!connected)return;busy=true;const b=$('publish-button');b.disabled=true;try{state=await call('inbox_publish',{title:$('title').value.trim(),body:$('body').value.trim(),criteria:$('criteria').value.trim()});$('publish').close();$('form').reset();render();toast('실습을 보냈어요.');}catch(e){toast(e.message,true);}finally{busy=false;b.disabled=false;}};
+$('form').onsubmit=async e=>{e.preventDefault();if(!connected)return;busy=true;const b=$('publish-button');b.disabled=true;try{state=await call('inbox_publish',{title:$('title').value.trim(),body:$('body').value.trim(),criteria:$('criteria').value.trim(),dueAt:$('publish-due').value?new Date($('publish-due').value).toISOString():null});$('publish').close();$('form').reset();render();toast('실습을 보냈어요.');}catch(e){toast(e.message,true);}finally{busy=false;b.disabled=false;}};
 app.ontoolresult=r=>{try{const next=data(r);if(Array.isArray(next.items)){state=next;render();}}catch(e){toast(e.message,true);}};
 app.onhostcontextchanged=ctx=>{if(ctx.theme)document.documentElement.dataset.theme=ctx.theme;};
 const removeItem=setupTrash(call,toast);
@@ -45,3 +45,8 @@ $('connection-close').onclick=()=>$('connection-dialog').close();
 async function switchConnection(mode){$('connection-error').textContent='';$('connection-join').disabled=true;$('connection-local').disabled=true;try{await call('inbox_connect',{mode,roomCode:$('room-code').value.trim()});selected=null;window.dispatchEvent(new Event('inbox-connection-changed'));$('room-code').value='';await refresh();window.dispatchEvent(new Event('inbox-changed'));$('connection-dialog').close();}catch(e){$('connection-error').textContent=e.message;}finally{$('connection-join').disabled=false;$('connection-local').disabled=false;}}
 $('connection-join').onclick=()=>switchConnection('cloud');
 $('connection-local').onclick=()=>switchConnection('local');
+
+let deadlineAssignment=null;
+function editDeadline(x){deadlineAssignment=x.id;$('deadline-assignment').textContent=x.title;$('deadline-error').textContent='';const date=x.due_at?new Date(x.due_at):null;$('deadline-input').value=date?new Date(date.getTime()-date.getTimezoneOffset()*60000).toISOString().slice(0,16):'';$('deadline-timezone').textContent='시간대: '+Intl.DateTimeFormat().resolvedOptions().timeZone;$('deadline-dialog').showModal();}
+$('deadline-close').onclick=()=>$('deadline-dialog').close();
+$('deadline-save').onclick=async()=>{const button=$('deadline-save');button.disabled=true;try{const input=$('deadline-input').value;state=await call('inbox_set_deadline',{id:deadlineAssignment,dueAt:input?new Date(input).toISOString():null});render();$('deadline-dialog').close();window.dispatchEvent(new Event('inbox-changed'));toast('제출 마감을 저장했어요.');}catch(e){$('deadline-error').textContent=e.message;}finally{button.disabled=false;}};
